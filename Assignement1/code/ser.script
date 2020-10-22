@@ -5,4 +5,4 @@
 cd $PBS_O_WORKDIR 
 
 MOVES="100000000" 
-/usr/bin/time ./pi.x 100000000 >out.ser 2>out.time.ser 
+/usr/bin/time ./pi.x ${MOVES} >out.ser 2>out.time.ser 
