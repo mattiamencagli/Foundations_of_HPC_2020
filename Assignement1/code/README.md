@@ -2,6 +2,6 @@
 
 ## Section 1
 
-I use Python to compute the algorithm and to generate the plot that I present in the report.
+I use Python to compute the algorithm and to generate the plots that I present in the report.
 
 ## Section 2
