@@ -5,7 +5,7 @@
 
 cd $PBS_O_WORKDIR
 
-rm mpi.script.*
+rm mpi.script.s8.*
 rm out.mpi.s8*
 rm out.time.mpi.s8*
  
