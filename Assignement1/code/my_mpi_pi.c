@@ -66,7 +66,7 @@ int main ( int argc , char *argv[ ] )
     for (proc=1; proc<numprocs ; proc++) {
       MPI_Recv(&local_M,1,MPI_LONG_LONG,proc,tag,MPI_COMM_WORLD,&status ) ;
       MPI_Recv(&tot_time,1,MPI_LONG_LONG,proc,tag,MPI_COMM_WORLD,&status ) ;
-	  printf ( "# walltime on processor %i : %10.8f \n",proc, tot_time ) ;
+      printf ( "# walltime on processor %i : %10.8f \n",proc, tot_time ) ;
       M += local_M ;
     }
     pi = 4.0*M/(N*numprocs) ;
@@ -82,7 +82,7 @@ int main ( int argc , char *argv[ ] )
 
     MPI_Ssend(&local_M , 1 ,MPI_LONG_LONG, master , tag ,MPI_COMM_WORLD) ;
     end_time=MPI_Wtime();
-    tot_time=end_time-start-time
+    tot_time=end_time-start_time;
     MPI_Ssend(&tot_time , 1,MPI_LONG_LONG, master , tag ,MPI_COMM_WORLD) ;
     //printf ( "\n # walltime on processor %i : %10.8f \n",myid, end_time - start_time ) ;
   }

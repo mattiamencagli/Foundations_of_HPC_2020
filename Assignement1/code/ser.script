@@ -3,9 +3,9 @@
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=0:03:00
 
-rm ser.script.*
-
 cd $PBS_O_WORKDIR 
+
+rm ser.script.*
 
 MOVES="100000000" 
 /usr/bin/time ./pi.x ${MOVES} >out.ser 2>out.time.ser 

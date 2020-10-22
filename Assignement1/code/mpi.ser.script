@@ -3,9 +3,10 @@
 #PBS -l nodes=1:ppn=1
 #PBS -l walltime=00:01:00
 
+cd $PBS_O_WORKDIR 
+
 rm mpi.ser.script.*
 
-cd $PBS_O_WORKDIR 
 module load   openmpi/4.0.3/gnu/9.3.0
 
 MOVES="100000000" 
