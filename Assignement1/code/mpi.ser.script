@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -q dssc
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=00:01:00
+
+rm mpi.ser.script.*
+
+cd $PBS_O_WORKDIR 
+module load   openmpi/4.0.3/gnu/9.3.0
+
+MOVES="100000000" 
+
+/usr/bin/time mpirun  --mca btl '^openib' -np 1 mpi_pi.x  ${MOVES} >out.mpiser 2>out.time.mpiser
