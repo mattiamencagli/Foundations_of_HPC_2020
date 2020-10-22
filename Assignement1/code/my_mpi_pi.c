@@ -66,13 +66,14 @@ int main ( int argc , char *argv[ ] )
     for (proc=1; proc<numprocs ; proc++) {
       MPI_Recv(&local_M,1,MPI_LONG_LONG,proc,tag,MPI_COMM_WORLD,&status ) ;
       MPI_Recv(&tot_time,1,MPI_LONG_LONG,proc,tag,MPI_COMM_WORLD,&status ) ;
-      printf ( "# walltime on processor %i : %10.8f \n",proc, tot_time ) ;
+      printf ( "%10.8f \n",proc, tot_time ) ;
       M += local_M ;
     }
     pi = 4.0*M/(N*numprocs) ;
     end_time=MPI_Wtime();
+    printf ( "%10.8f \n", end_time - start_time ) ;
     printf ( "# of trials = %llu , estimate of pi is %1.9f \n", N*numprocs, pi ) ;
-    printf ( "# walltime on master processor : %10.8f \n\n", end_time - start_time ) ;
+
   }
   else {   // for all the slave processes send results to the master /
 
