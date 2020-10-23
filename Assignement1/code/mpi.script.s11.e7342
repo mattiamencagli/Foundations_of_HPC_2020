@@ -1,0 +1,6 @@
+rm: cannot remove ‘mpi.script.s11.*’: No such file or directory
+rm: cannot remove ‘out.mpi.s11*’: No such file or directory
+rm: cannot remove ‘out.time.mpi.s11*’: No such file or directory
+loading dependency gnu/9.3.0
+loading dependency numactl/2.0.13
+loading dependency hwloc/2.2.0
