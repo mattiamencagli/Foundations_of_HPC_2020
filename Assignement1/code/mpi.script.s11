@@ -11,7 +11,7 @@ rm out.time.mpi.s11*
  
 module load   openmpi/4.0.3/gnu/9.3.0
 
-MOVES="100000000" 
+MOVES="100000000000" 
 
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
 echo "executing on ", ${procs}, "  processors" 
