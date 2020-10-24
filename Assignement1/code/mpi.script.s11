@@ -6,17 +6,17 @@
 cd $PBS_O_WORKDIR
 
 rm mpi.script.s11.*
-rm out.mpi.s11.2 out.mpi.s11.3
-rm out.time.mpi.s11.2 out.mpi.s11.3
+rm out.mpi.s11*
+rm out.time.mpi.s11*
  
 module load   openmpi/4.0.3/gnu/9.3.0
 
 MOVES="100000000000" 
 
-#for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
-#echo "executing on ", ${procs}, "  processors" 
-#/usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${MOVES} >>out.mpi.s11.1 2>>out.time.mpi.s11.1
-#done
+for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
+echo "executing on ", ${procs}, "  processors" 
+/usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${MOVES} >>out.mpi.s11.1 2>>out.time.mpi.s11.1
+done
 
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
 echo "executing on ", ${procs}, "  processors" 
