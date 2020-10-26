@@ -1,0 +1,91 @@
+263.89user 0.39system 4:24.00elapsed 100%CPU (0avgtext+0avgdata 123640maxresident)k
+0inputs+16648outputs (9major+33042minor)pagefaults 0swaps
+1053.80user 0.81system 4:23.72elapsed 399%CPU (0avgtext+0avgdata 124284maxresident)k
+0inputs+16648outputs (9major+120775minor)pagefaults 0swaps
+2117.42user 2.49system 4:25.38elapsed 798%CPU (0avgtext+0avgdata 124932maxresident)k
+0inputs+16648outputs (9major+238794minor)pagefaults 0swaps
+3191.14user 3.21system 4:26.29elapsed 1199%CPU (0avgtext+0avgdata 125532maxresident)k
+0inputs+16648outputs (9major+356859minor)pagefaults 0swaps
+4532.68user 5.61system 4:48.33elapsed 1573%CPU (0avgtext+0avgdata 126092maxresident)k
+0inputs+16648outputs (9major+477162minor)pagefaults 0swaps
+5415.89user 4.84system 4:31.41elapsed 1997%CPU (0avgtext+0avgdata 126792maxresident)k
+0inputs+16648outputs (9major+598015minor)pagefaults 0swaps
+6583.05user 10.90system 4:34.95elapsed 2398%CPU (0avgtext+0avgdata 127328maxresident)k
+0inputs+16648outputs (9major+720063minor)pagefaults 0swaps
+8228.69user 8.92system 4:56.91elapsed 2774%CPU (0avgtext+0avgdata 127832maxresident)k
+0inputs+16648outputs (9major+843091minor)pagefaults 0swaps
+9837.39user 12.15system 5:15.79elapsed 3118%CPU (0avgtext+0avgdata 128564maxresident)k
+0inputs+16664outputs (9major+967971minor)pagefaults 0swaps
+11043.06user 14.96system 5:09.74elapsed 3569%CPU (0avgtext+0avgdata 129260maxresident)k
+0inputs+16664outputs (9major+1094579minor)pagefaults 0swaps
+12944.97user 19.85system 5:24.48elapsed 3995%CPU (0avgtext+0avgdata 129852maxresident)k
+0inputs+16664outputs (9major+1220235minor)pagefaults 0swaps
+[ct1pg-gnode003:46071:0:46071]       ud_ep.c:255  Fatal: UD endpoint 0x145c2c002f60 to <no debug data>: unhandled timeout error
+==== backtrace (tid:  46071) ====
+ 0 0x000000000004ee05 ucs_debug_print_backtrace()  ???:0
+ 1 0x0000000000046dde uct_ud_grh_get_dgid()  ???:0
+ 2 0x0000000000048a8e ucs_callbackq_put_id_noflag()  ???:0
+ 3 0x000000000002300a ucp_worker_progress()  ???:0
+ 4 0x0000000000005433 mca_pml_ucx_send()  ???:0
+ 5 0x000000000008ae38 PMPI_Ssend()  ???:0
+ 6 0x0000000000400dce main()  ???:0
+ 7 0x0000000000022505 __libc_start_main()  ???:0
+ 8 0x0000000000400a19 _start()  ???:0
+=================================
+[ct1pg-gnode003:46071] *** Process received signal ***
+[ct1pg-gnode003:46071] Signal: Aborted (6)
+[ct1pg-gnode003:46071] Signal code:  (-6)
+[ct1pg-gnode003:46071] [ 0] /lib64/libpthread.so.0(+0xf5f0)[0x145c4c4825f0]
+[ct1pg-gnode003:46071] [ 1] /lib64/libc.so.6(gsignal+0x37)[0x145c4c0db337]
+[ct1pg-gnode003:46071] [ 2] /lib64/libc.so.6(abort+0x148)[0x145c4c0dca28]
+[ct1pg-gnode003:46071] [ 3] /lib64/libucs.so.0(ucs_fatal_error_message+0x55)[0x145c3b43c7f5]
+[ct1pg-gnode003:46071] [ 4] /lib64/libucs.so.0(+0x4d995)[0x145c3b43c995]
+[ct1pg-gnode003:46071] [ 5] /lib64/ucx/libuct_ib.so.0(+0x46dde)[0x145c3adacdde]
+[ct1pg-gnode003:46071] [ 6] /lib64/libucs.so.0(+0x48a8e)[0x145c3b437a8e]
+[ct1pg-gnode003:46071] [ 7] /lib64/libucp.so.0(ucp_worker_progress+0x5a)[0x145c3bbbe00a]
+[ct1pg-gnode003:46071] [ 8] /opt/area/shared/programs/x86_64/openmpi/4.0.3/gnu/9.3.0/lib/openmpi/mca_pml_ucx.so(mca_pml_ucx_send+0x2e3)[0x145c40567433]
+[ct1pg-gnode003:46071] [ 9] /opt/area/shared/programs/x86_64/openmpi/4.0.3/gnu/9.3.0/lib/libmpi.so.40(PMPI_Ssend+0x118)[0x145c4c719e38]
+[ct1pg-gnode003:46071] [10] my_mpi_pi.x[0x400dce]
+[ct1pg-gnode003:46071] [11] /lib64/libc.so.6(__libc_start_main+0xf5)[0x145c4c0c7505]
+[ct1pg-gnode003:46071] [12] my_mpi_pi.x[0x400a19]
+[ct1pg-gnode003:46071] *** End of error message ***
+--------------------------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code. Per user-direction, the job has been aborted.
+--------------------------------------------------------------------------
+[ct1pg-gnode003:46093:0:46093]       ud_ep.c:255  Fatal: UD endpoint 0x151e28001400 to <no debug data>: unhandled timeout error
+==== backtrace (tid:  46093) ====
+ 0 0x000000000004ee05 ucs_debug_print_backtrace()  ???:0
+ 1 0x0000000000046dde uct_ud_grh_get_dgid()  ???:0
+ 2 0x0000000000048a8e ucs_callbackq_put_id_noflag()  ???:0
+ 3 0x000000000002300a ucp_worker_progress()  ???:0
+ 4 0x0000000000005433 mca_pml_ucx_send()  ???:0
+ 5 0x000000000008ae38 PMPI_Ssend()  ???:0
+ 6 0x0000000000400dce main()  ???:0
+ 7 0x0000000000022505 __libc_start_main()  ???:0
+ 8 0x0000000000400a19 _start()  ???:0
+=================================
+[ct1pg-gnode003:46093] *** Process received signal ***
+[ct1pg-gnode003:46093] Signal: Aborted (6)
+[ct1pg-gnode003:46093] Signal code:  (-6)
+[ct1pg-gnode003:46093] [ 0] /lib64/libpthread.so.0(+0xf5f0)[0x151e4a3545f0]
+[ct1pg-gnode003:46093] [ 1] /lib64/libc.so.6(gsignal+0x37)[0x151e49fad337]
+[ct1pg-gnode003:46093] [ 2] /lib64/libc.so.6(abort+0x148)[0x151e49faea28]
+[ct1pg-gnode003:46093] [ 3] /lib64/libucs.so.0(ucs_fatal_error_message+0x55)[0x151e3d3c77f5]
+[ct1pg-gnode003:46093] [ 4] /lib64/libucs.so.0(+0x4d995)[0x151e3d3c7995]
+[ct1pg-gnode003:46093] [ 5] /lib64/ucx/libuct_ib.so.0(+0x46dde)[0x151e3cd37dde]
+[ct1pg-gnode003:46093] [ 6] /lib64/libucs.so.0(+0x48a8e)[0x151e3d3c2a8e]
+[ct1pg-gnode003:46093] [ 7] /lib64/libucp.so.0(ucp_worker_progress+0x5a)[0x151e3db4900a]
+[ct1pg-gnode003:46093] [ 8] /opt/area/shared/programs/x86_64/openmpi/4.0.3/gnu/9.3.0/lib/openmpi/mca_pml_ucx.so(mca_pml_ucx_send+0x2e3)[0x151e3e397433]
+[ct1pg-gnode003:46093] [ 9] /opt/area/shared/programs/x86_64/openmpi/4.0.3/gnu/9.3.0/lib/libmpi.so.40(PMPI_Ssend+0x118)[0x151e4a5ebe38]
+[ct1pg-gnode003:46093] [10] my_mpi_pi.x[0x400dce]
+[ct1pg-gnode003:46093] [11] /lib64/libc.so.6(__libc_start_main+0xf5)[0x151e49f99505]
+[ct1pg-gnode003:46093] [12] my_mpi_pi.x[0x400a19]
+[ct1pg-gnode003:46093] *** End of error message ***
+--------------------------------------------------------------------------
+mpirun noticed that process rank 25 with PID 0 on node ct1pg-gnode003 exited on signal 6 (Aborted).
+--------------------------------------------------------------------------
+310.11user 0.67system 5:12.47elapsed 99%CPU (0avgtext+0avgdata 182768maxresident)k
+0inputs+16680outputs (9major+39392minor)pagefaults 0swaps
+15908.75user 25.75system 5:49.04elapsed 4565%CPU (0avgtext+0avgdata 131116maxresident)k
+0inputs+16680outputs (9major+1477815minor)pagefaults 0swaps
