@@ -1,8 +1,8 @@
 #header: N, best P naive algorithm , best P for enhanced algorithm if any
 
 ####
-20000     ,   [3],   XXX
-100000    ,   [9],   XXX
-200000    ,  [13],   XXX
-1000000   ,  [31],   XXX
-20000000  ,  [99],   XXX
+20000     ,     3,   XXX
+100000    ,     9,   XXX
+200000    ,    13,   XXX
+1000000   ,    31,   XXX
+20000000  ,    99,   XXX
