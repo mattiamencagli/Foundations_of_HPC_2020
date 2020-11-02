@@ -1,13 +1,19 @@
 #!/bin/bash
 #PBS -q dssc
 #PBS -l nodes=1:ppn=48
-#PBS -l walltime=03:00:00
+#PBS -l walltime=10:00:00
 
 cd $PBS_O_WORKDIR
 
 rm mpi.script.w10.*
-rm out.mpi.w10.*
-rm out.time.mpi.w10.*
+rm out.mpi.w10.2 #!!!
+rm out.time.mpi.w10.2 #!!!
+rm out.mpi.w10.3 #!!!
+rm out.time.mpi.w10.3 #!!!
+rm out.mpi.w10.4 #!!!
+rm out.time.mpi.w10.4 #!!!
+rm out.mpi.w10.5 #!!!
+rm out.time.mpi.w10.5 #!!!
  
 module load   openmpi/4.0.3/gnu/9.3.0
 
@@ -16,17 +22,23 @@ MOVES="10000000000"
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
 echo "executing on ", ${procs}, "  processors" 
 t_MOVES=$((${MOVES}*${procs}))
-/usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${t_MOVES} >>out.mpi.w10.1 2>>out.time.mpi.w10.1
+/usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${t_MOVES} >>out.mpi.w10.4 2>>out.time.mpi.w10.4
 done
 
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
 echo "executing on ", ${procs}, "  processors" 
 t_MOVES=$((${MOVES}*${procs}))
-/usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${t_MOVES} >>out.mpi.w10.2 2>>out.time.mpi.w10.2
+/usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${t_MOVES} >>out.mpi.w10.5 2>>out.time.mpi.w10.5
 done
 
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
 echo "executing on ", ${procs}, "  processors" 
 t_MOVES=$((${MOVES}*${procs}))
 /usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${t_MOVES} >>out.mpi.w10.3 2>>out.time.mpi.w10.3
+done
+
+for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
+echo "executing on ", ${procs}, "  processors" 
+t_MOVES=$((${MOVES}*${procs}))
+/usr/bin/time mpirun  --mca btl '^openib' -np ${procs} my_mpi_pi.x  ${t_MOVES} >>out.mpi.w10.2 2>>out.time.mpi.w10.2
 done
