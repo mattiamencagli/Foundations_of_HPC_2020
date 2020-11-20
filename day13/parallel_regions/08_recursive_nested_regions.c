@@ -50,7 +50,7 @@
 
 
 #if !defined(WATCH_THREADS)
-#define WATCH_THREADS 2.5
+#define WATCH_THREADS 5
 #endif
 
 #if !defined(WAIT)
@@ -124,13 +124,24 @@ int main( int argc, char **argv )
 	  max_nesting_levels  = omp_get_max_active_levels();
     }
 
-   #if defined(__GNUC__)
+
     if ( max_nesting_levels > 1000000 ) {
+      // this check is due to the fact that when OMP_NEST is defined TRUE but
+      // OMP_MAX_ACTIVE_LEVELS is NOT defined, gcc sets the latter to the
+      // weird value MAX_INT (i.e. 2147483647 = (1<<31)-1 )
+      //
+      // pgi' and intel's compilers instead sets it to the more reasonable value of 1
+      //
       printf("somehing is strange in your max_active_level: I've got the value %u\n",
-	     max_nesting_levels ); return 1;}
-    else
-   #endif
-      printf("I've got that you allow %u nested levels\n", max_nesting_levels);
+	     max_nesting_levels );
+     #if defined(__GNUC__)
+      printf("..in fact, you're using GCC.\n");
+     #endif
+      return 1;
+    }
+
+    printf("I've got that you allow %u nested levels\n", max_nesting_levels);
+    printf("I start recursion with %d threads\n", nthreads);
     function( "00.00", nthreads );
 
 
@@ -144,15 +155,16 @@ int function( char *father_name, int next )
 //
 
  #if !(defined(__ICC) || defined(__INTEL_COMPILER))
- #define ENFORCE_ORDERED_OUTPUT( MSG )				\
-  _Pragma("pragma omp for ordered")				\
-    for(int oo = 0; oo < omp_get_num_threads(); oo++)		\
-  _Pragma("pragma omp ordered")	                                \
-    printf("%s", (MSG));
+ #define ENFORCE_ORDERED_OUTPUT( MSG ) {			\
+    int done = 0;						\
+    while( !done ) {						\
+      _Pragma("pragma omp critical(output)")			\
+	if( myid == order ) { printf("%s", (MSG));		\
+      order++; done=1;}}}
  #else
  #define ENFORCE_ORDERED_OUTPUT( MSG ) printf("%s", (MSG));
  #endif
-
+  
 //
 #define GET_LEVEL_INFO				\
   int myid = omp_get_thread_num();		\
