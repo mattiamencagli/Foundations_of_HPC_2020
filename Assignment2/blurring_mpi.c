@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
-// gcc bluring_mpi.c
+// gcc bluring_mpi.c -lm
 // ./a.out file.pgm N kernel_name
 
 
@@ -121,7 +122,13 @@ float * kernel(int name,float f, int N){
 			}
 			k[n*(N+1)]=f;
 			return k;
-		//case3(3): // GAUSSIAN (non normalizzato)
+		case(3): // GAUSSIAN (non normalizzato)
+			for (int i=0; i<N; i++){
+				for (int j=0; j<N; j++){
+					k[i*N+j]=pow(2.7182,(-(pow(i-n,2)+pow(j-n,2))/(2*n*n)))/(2*3.1415*n*n);
+				}
+			}
+			return k;
 	}
 }
 
