@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <mpi.h>
 
 #if ((0x100 & 0xf) == 0x0)
 #define I_M_LITTLE_ENDIAN 1
@@ -21,20 +22,21 @@ void swap_image( void *image, int xsize, int ysize, int maxval );
 
 float* kernel(int k_type, float f, int N);
 
-void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w);
+void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int myid, int numprocs);
 
 void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
+void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, int numprocs);
 
 int main(int argc ,char **argv){
 
-	if(argc<5){
-		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
+	if( argc<7 ){
+		printf("ERROR: \nYou must provide 6 arguments in executions:\n two args for mpi usage (-n #),then:  file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
 		exit(1);
 	}
 
 
-	char* filename = argv[1];
+	char* filename = argv[3];
 	int width=0,height=0,maxval=0;
 	void* im;
 	read_pgm_image( &im, &maxval, &width, &height, filename);
@@ -44,9 +46,9 @@ int main(int argc ,char **argv){
 	//write_pgm_image( im, maxval, width, height, "prova.pgm");
 
 	
-	int N=strtol(argv[2], NULL, 10);
-	int k_type=strtol(argv[3],NULL,10);
-	float f=strtof(argv[4],NULL);
+	int N=strtol(argv[4], NULL, 10);
+	int k_type=strtol(argv[5],NULL,10);
+	float f=strtof(argv[6],NULL);
 	if(N<=0 || N%2==0){
 		printf("ERROR: \nThe dimension of the kernel should be a positive and odd integer.\n");
 		exit(1);
@@ -61,44 +63,42 @@ int main(int argc ,char **argv){
 		exit(1);
 	}
 	float* K= kernel(k_type, f, N);
+	
+	void* blur;
 
-	/*
-	for(int i=0; i<N; i++){
-		for(int j=0; j<N; j++){
-			printf("%f ",K[i*N+j]);
-		}
-		printf("\n");
-	}*/
-	void* blur=malloc(height*width*sizeof(u_int16_t));
-	bluring(K,blur,im,N,height,width);
+	//######################################################################
+	int myid , numprocs ;
+	MPI_Init(&argc,&argv);
+	MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 
+	if(myid==0){
+		blur=malloc(height*width*sizeof(u_int16_t));
+	}
+
+	void* lblur=malloc(height*width*sizeof(u_int16_t)/numprocs);
+	bluring(K,lblur,im,N,height,width,myid,numprocs);
+	
+	send_to_master( blur, lblur, height, width, myid, numprocs);
+	free(lblur);
+	
+
+	MPI_Finalize();
+	//######################################################################
 
 	char final_name[42]="";
 	name_gen(filename, N, f, k_type, final_name);
 	
 	swap_image( blur, width, height, maxval );
-	write_pgm_image( blur, maxval, width, height, final_name);
+	write_pgm_image( blur, maxval, width, height, final_name);	
 
-	/*
-	int myid , numprocs , proc ;
-	
-	MPI_Status status;
-	MPI_Init(&argc,&argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
-	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-
-	if ( argc <=1) { //Security exit
-		fprintf (stderr , " Usage : mpi -np n %s number_of_iterations \n", argv[0] ) ;
-		MPI_Finalize() ;
-		exit(-1) ;
-	}
-	*/
 	
 	free(im);
 	free(K);
 	free(blur);
 	return 0;
 }
+
 
 
 float * kernel(int k_type,float f, int N){
@@ -133,14 +133,21 @@ float * kernel(int k_type,float f, int N){
 }
 
 			
-void bluring(float* K, u_int16_t* blur, u_int16_t* im, int N, int h, int w){
+void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int myid, int numprocs){
 	int n=N/2;
 	float norm, sum;
+	int lw=w*2/numprocs;
+	int lh=h*2/numprocs;
+
+	int a,b,c,d;
+	a=(myid-myid%(w/lw))*lh*lh/h;
+	b=a+lh;
+	c=(myid%(w/lw))*lw;
+	d=c+lw;
 	
 	int e=n,f=-n,g=n,l=-n;
-	for (int i=0; i<h; i++){
-		for (int j=0; j<w; j++){
-			sum=0;
+	for (int i=a; i<b; i++){
+		for (int j=c; j<d; j++){
 			if( i<N-(n+1) ){
 				e=-i;
 				f=n;
@@ -189,6 +196,7 @@ void bluring(float* K, u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 					l=n;
 				}	
 			}
+			sum=0;
 			for (int u=e; u<=f; u++){
 				for (int v=g; v<=l; v++){
 					sum += K[(u+n)*N+(v+n)];
@@ -202,7 +210,7 @@ void bluring(float* K, u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 					sum += im[(i+u)*w+(j+v)]*K[(u+n)*N+(v+n)]*norm;
 				}
 			}
-			blur[i*w+j] = (u_int16_t)sum;
+			blur[(i-a)*lw+(j-c)] = (u_int16_t)sum;
 		}
 	}
 }
@@ -217,7 +225,7 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 	*temp = '\0';
 
 	strcat(NAME, fname);
-	strcat(NAME,"-ser_");
+	strcat(NAME,"-mpi_");
 
 	char* type;
 	switch(k_type){
@@ -250,8 +258,35 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 }
 
 
-
-
+void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, int numprocs){
+	MPI_Status status;
+	int tag=42;
+	int elements=w*h/numprocs;
+	if(myid==0){
+		int lh=h*2/numprocs;
+		int lw=w*2/numprocs;
+		for (int i=0; i<lh; i++){
+			for(int j=0; j<lw; j++){
+				blur[i*w+j]=lblur[i*lw+j];
+			}
+		}
+		for (int proc=1; proc<numprocs ; proc++) {
+			MPI_Recv(lblur,elements,MPI_UNSIGNED_SHORT,proc,tag,MPI_COMM_WORLD,&status);
+			int a,b,c,d;
+			a=(proc-proc%(w/lw))*lh*lh/h;
+			b=a+lh;
+			c=(proc%(w/lw))*lw;
+			d=c+lw;
+			for (int i=a; i<b; i++){
+				for(int j=c; j<d; j++){
+					blur[i*w+j]=lblur[(i-a)*lw+(j-c)];
+				}
+			}
+		}
+	} else {
+		MPI_Send(lblur , elements ,MPI_UNSIGNED_SHORT, 0 , tag ,MPI_COMM_WORLD) ;
+	}
+}
 
 
 
