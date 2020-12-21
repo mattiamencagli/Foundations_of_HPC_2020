@@ -138,9 +138,8 @@ float * kernel(int k_type,float f, int N){
 void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int myid, int numprocs){
 	int n=N/2;
 	float norm, sum;
-	float border=pow(numprocs,0.5);
-	int lw=w*(int)border/numprocs;
-	int lh=h*(int)border/numprocs;
+	int lw=w*2/numprocs;
+	int lh=h*2/numprocs;
 
 	int a,b,c,d;
 	a=(myid-myid%(w/lw))*lh*lh/h;
@@ -288,6 +287,7 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 	
 	strcat(NAME,".pgm");
 }
+
 
 
 
