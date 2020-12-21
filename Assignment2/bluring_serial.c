@@ -81,21 +81,6 @@ int main(int argc ,char **argv){
 	
 	swap_image( blur, width, height, maxval );
 	write_pgm_image( blur, maxval, width, height, final_name);
-
-	/*
-	int myid , numprocs , proc ;
-	
-	MPI_Status status;
-	MPI_Init(&argc,&argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
-	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-
-	if ( argc <=1) { //Security exit
-		fprintf (stderr , " Usage : mpi -np n %s number_of_iterations \n", argv[0] ) ;
-		MPI_Finalize() ;
-		exit(-1) ;
-	}
-	*/
 	
 	free(im);
 	free(K);
@@ -111,9 +96,9 @@ float * kernel(int k_type,float f, int N){
 	
 	switch(k_type){
 		
-		case(0): // MEAN (non normalizzato)
+		case(0): // MEAN (normalizzato)
 			for (int i=0; i<N*N; i++){
-				k[i]=1;
+				k[i]=1./((float)N*(float)N);
 			}
 			return k;
 			
@@ -124,11 +109,16 @@ float * kernel(int k_type,float f, int N){
 			k[(N/2)*(N+1)]=f;
 			return k;
 			
-		case(2): // GAUSSIAN (non normalizzato)
+		case(2): // GAUSSIAN (normalizzato)
+			sum=0;
 			for (int i=0; i<N; i++){
 				for (int j=0; j<N; j++){
 					k[i*N+j]=pow(2.7182,(-(pow(i-n,2)+pow(j-n,2))/(2.*(float)n*(float)n)))/(2.*3.1415*(float)n*(float)n);
+					sum +=k[i*N+j];
 				}
+			}
+			for (int i=0; i<N*N; i++){
+				k[i] /= sum;
 			}
 			return k;
 			
@@ -140,10 +130,10 @@ void bluring(float* K, u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 	int n=N/2;
 	float norm, sum;
 	
-	int e=n,f=-n,g=n,l=-n;
+	int e=n,f=-n,g=n,l=-n,bool;
 	for (int i=0; i<h; i++){
 		for (int j=0; j<w; j++){
-			sum=0;
+			bool=1;
 			if( i<N-(n+1) ){
 				e=-i;
 				f=n;
@@ -188,16 +178,21 @@ void bluring(float* K, u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 					l=w-j-1;
 				}
 				else{
+					bool=0;
 					g=-n;
 					l=n;
 				}	
 			}
-			for (int u=e; u<=f; u++){
-				for (int v=g; v<=l; v++){
-					sum += K[(u+n)*N+(v+n)];
+			norm=1;
+			if(bool==1){ //normalization for borders
+				sum=0;
+				for (int u=e; u<=f; u++){
+					for (int v=g; v<=l; v++){
+						sum += K[(u+n)*N+(v+n)];
+					}
 				}
+				norm=1./sum;
 			}
-			norm=1./sum;
 			sum=0;
 
 			for (int u=e; u<=f; u++){

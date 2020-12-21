@@ -5,7 +5,7 @@
 #include <mpi.h>
 
 // gcc bluring_mpi.c -lm
-// mpirun a.out -n 4 check_me.pgm 9 2 0
+// mpirun -np 4 ./a.out check_me.pgm 9 2 0
 
 #if ((0x100 & 0xf) == 0x0)
 #define I_M_LITTLE_ENDIAN 1
@@ -27,6 +27,8 @@ float* kernel(int k_type, float f, int N);
 
 void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int myid, int numprocs);
 
+void grid(int h, int w, int myid, int numprocs, int* lw, int* lh, int* a, int* b, int* c, int* d);
+
 void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, int numprocs);
 
 
@@ -35,13 +37,13 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
 int main(int argc ,char **argv){
 
-	if( argc<7 ){
-		printf("ERROR: \nYou must provide 6 arguments in executions:\n two args for mpi usage (-n #),then:  file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
+	if(argc<5){
+		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
 		exit(1);
 	}
 
 
-	char* filename = argv[3];
+	char* filename = argv[1];
 	int width=0,height=0,maxval=0;
 	void* im;
 	read_pgm_image( &im, &maxval, &width, &height, filename);
@@ -51,9 +53,9 @@ int main(int argc ,char **argv){
 	//write_pgm_image( im, maxval, width, height, "prova.pgm");
 
 	
-	int N=strtol(argv[4], NULL, 10);
-	int k_type=strtol(argv[5],NULL,10);
-	float f=strtof(argv[6],NULL);
+	int N=strtol(argv[2], NULL, 10);
+	int k_type=strtol(argv[3],NULL,10);
+	float f=strtof(argv[4],NULL);
 	if(N<=0 || N%2==0){
 		printf("ERROR: \nThe dimension of the kernel should be a positive and odd integer.\n");
 		exit(1);
@@ -80,7 +82,7 @@ int main(int argc ,char **argv){
 	if(myid==0){
 		blur=malloc(height*width*sizeof(u_int16_t));
 	}
-
+	
 	void* lblur=malloc(height*width*sizeof(u_int16_t)/numprocs);
 	bluring(K,lblur,im,N,height,width,myid,numprocs);
 	
@@ -110,12 +112,13 @@ float * kernel(int k_type,float f, int N){
 	
 	float* k=(float *)malloc(N*N*sizeof(float));
 	int n=N/2;
+	float sum;
 	
 	switch(k_type){
 		
-		case(0): // MEAN (non normalizzato)
+		case(0): // MEAN (normalizzato)
 			for (int i=0; i<N*N; i++){
-				k[i]=1;
+				k[i]=1./((float)N*(float)N);
 			}
 			return k;
 			
@@ -126,11 +129,16 @@ float * kernel(int k_type,float f, int N){
 			k[(N/2)*(N+1)]=f;
 			return k;
 			
-		case(2): // GAUSSIAN (non normalizzato)
+		case(2): // GAUSSIAN (normalizzato)
+			sum=0;
 			for (int i=0; i<N; i++){
 				for (int j=0; j<N; j++){
 					k[i*N+j]=pow(2.7182,(-(pow(i-n,2)+pow(j-n,2))/(2.*(float)n*(float)n)))/(2.*3.1415*(float)n*(float)n);
+					sum +=k[i*N+j];
 				}
+			}
+			for (int i=0; i<N*N; i++){
+				k[i] /= sum;
 			}
 			return k;
 			
@@ -141,19 +149,15 @@ float * kernel(int k_type,float f, int N){
 void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int myid, int numprocs){
 	int n=N/2;
 	float norm, sum;
-	float border=pow(numprocs,0.5);
-	int lw=w*(int)border/numprocs;
-	int lh=h*(int)border/numprocs;
-
-	int a,b,c,d;
-	a=(myid-myid%(w/lw))*lh*lh/h;
-	b=a+lh;
-	c=(myid%(w/lw))*lw;
-	d=c+lw;
 	
-	int e=n,f=-n,g=n,l=-n;
+	int lw,lh,a,b,c,d;
+	
+	grid(h,w,myid,numprocs,&lw,&lh,&a,&b,&c,&d);
+	
+	int e=-n,f=n,g=-n,l=n, bool;
 	for (int i=a; i<b; i++){
 		for (int j=c; j<d; j++){
+			bool=1;
 			if( i<N-(n+1) ){
 				e=-i;
 				f=n;
@@ -198,17 +202,22 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int m
 					l=w-j-1;
 				}
 				else{
+					bool=0;
 					g=-n;
 					l=n;
 				}	
 			}
-			sum=0;
-			for (int u=e; u<=f; u++){
-				for (int v=g; v<=l; v++){
-					sum += K[(u+n)*N+(v+n)];
+			norm=1;
+			if(bool==1){ //normalization for borders
+				sum=0;
+				for (int u=e; u<=f; u++){
+					for (int v=g; v<=l; v++){
+						sum += K[(u+n)*N+(v+n)];
+					}
 				}
+				norm=1./sum;
 			}
-			norm=1./sum;
+
 			sum=0;
 
 			for (int u=e; u<=f; u++){
@@ -221,26 +230,82 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int m
 	}
 }
 
+void grid(int h, int w, int myid, int numprocs, int* lw, int* lh, int* a, int* b, int* c, int* d){
+
+	int big_dim, big_dim_loc, small_dim_loc;
+	if(w>h){
+		big_dim=w;
+	} else{
+		big_dim=h;
+	}
+
+	int tmp=((float)big_dim)/(sqrt(h*w/numprocs))+0.5;	
+
+	while(1){
+		if(numprocs%tmp){
+			++tmp;
+		}else{
+			big_dim_loc=tmp;
+			small_dim_loc=numprocs/tmp;
+			break;
+		}
+	}
+	
+	int proc_w,proc_h;
+	if(w>h){
+		proc_w=big_dim_loc;
+		proc_h=small_dim_loc;
+	} else{
+		proc_h=big_dim_loc;
+		proc_w=small_dim_loc;
+	}
+
+	*lw=w/proc_w;
+	*lh=h/proc_h;
+
+	int x_w=0, x_h=0; 
+	int avanzo_w=w-(*lw)*proc_w, avanzo_h=h-(*lh)*proc_h;
+	
+	if (avanzo_w!=0){
+		if(myid%proc_w==proc_w-1){
+			x_w=avanzo_w;
+		}
+	}
+	if (avanzo_h!=0){
+		if(myid%proc_h==proc_h-1){
+			x_h=avanzo_h;
+		}
+	}
+
+	*a=(myid-myid%proc_w)*(*lh)/proc_w;
+	*b=(*a)+(*lh)+x_h;
+	*c=(myid%proc_w)*(*lw);
+	*d=(*c)+(*lw)+x_w;
+	*lw+=x_w;
+	*lh+=x_h;
+
+	printf("id=%d;\t lw=%d, lh=%d, a=%d, b=%d, c=%d, d=%d\n ",myid,*lw,*lh,*a,*b,*c,*d);
+	
+}
+
+
 
 void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, int numprocs){
 	MPI_Status status;
 	int tag=42;
-	int elements=w*h/numprocs;
+	int lw,lh,a,b,c,d;
+
 	if(myid==0){
-		int lh=h*2/numprocs;
-		int lw=w*2/numprocs;
+		int lw,lh,a,b,c,d;
+		grid(h,w,myid,numprocs,&lw,&lh,&a,&b,&c,&d);
 		for (int i=0; i<lh; i++){
 			for(int j=0; j<lw; j++){
 				blur[i*w+j]=lblur[i*lw+j];
 			}
 		}
 		for (int proc=1; proc<numprocs ; proc++) {
-			MPI_Recv(lblur,elements,MPI_UNSIGNED_SHORT,proc,tag,MPI_COMM_WORLD,&status);
-			int a,b,c,d;
-			a=(proc-proc%(w/lw))*lh*lh/h;
-			b=a+lh;
-			c=(proc%(w/lw))*lw;
-			d=c+lw;
+			grid(h,w,proc,numprocs,&lw,&lh,&a,&b,&c,&d);
+			MPI_Recv(lblur,lw*lh,MPI_UNSIGNED_SHORT,proc,tag,MPI_COMM_WORLD,&status);
 			for (int i=a; i<b; i++){
 				for(int j=c; j<d; j++){
 					blur[i*w+j]=lblur[(i-a)*lw+(j-c)];
@@ -248,7 +313,8 @@ void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, i
 			}
 		}
 	} else {
-		MPI_Send(lblur , elements ,MPI_UNSIGNED_SHORT, 0 , tag ,MPI_COMM_WORLD) ;
+		grid(h,w,myid,numprocs,&lw,&lh,&a,&b,&c,&d);
+		MPI_Send(lblur , lw*lh ,MPI_UNSIGNED_SHORT, 0 , tag ,MPI_COMM_WORLD) ;
 	}
 }
 
