@@ -4,6 +4,9 @@
 #include <math.h>
 #include <mpi.h>
 
+// gcc bluring_mpi.c -lm
+// mpirun a.out -n 4 check_me.pgm 9 2 0
+
 #if ((0x100 & 0xf) == 0x0)
 #define I_M_LITTLE_ENDIAN 1
 #define swap(mem) (( (mem) & (short int)0xff00) >> 8) +	\

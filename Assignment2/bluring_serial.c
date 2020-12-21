@@ -3,6 +3,9 @@
 #include <string.h>
 #include <math.h>
 
+// gcc bluring_serial.c -lm
+// ./a.out check_me.pgm 9 2 0
+
 #if ((0x100 & 0xf) == 0x0)
 #define I_M_LITTLE_ENDIAN 1
 #define swap(mem) (( (mem) & (short int)0xff00) >> 8) +	\
