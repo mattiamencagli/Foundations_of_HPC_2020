@@ -93,6 +93,7 @@ float * kernel(int k_type,float f, int N){
 	
 	float* k=(float *)malloc(N*N*sizeof(float));
 	int n=N/2;
+	float sum;
 	
 	switch(k_type){
 		
