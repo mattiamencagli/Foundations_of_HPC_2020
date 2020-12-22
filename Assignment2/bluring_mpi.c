@@ -4,7 +4,7 @@
 #include <math.h>
 #include <mpi.h>
 
-// gcc bluring_mpi.c -lm
+// mpicc bluring_mpi.c -lm
 // mpirun -np 4 ./a.out check_me.pgm 9 2 0
 
 #if ((0x100 & 0xf) == 0x0)
@@ -30,7 +30,6 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int m
 void grid(int h, int w, int myid, int numprocs, int* lw, int* lh, int* a, int* b, int* c, int* d);
 
 void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, int numprocs);
-
 
 void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
@@ -284,7 +283,7 @@ void grid(int h, int w, int myid, int numprocs, int* lw, int* lh, int* a, int* b
 	*lw+=x_w;
 	*lh+=x_h;
 
-	printf("id=%d;\t lw=%d, lh=%d, a=%d, b=%d, c=%d, d=%d\n ",myid,*lw,*lh,*a,*b,*c,*d);
+	//printf("id=%d;\t lw=%d, lh=%d, a=%d, b=%d, c=%d, d=%d\n ",myid,*lw,*lh,*a,*b,*c,*d);
 	
 }
 

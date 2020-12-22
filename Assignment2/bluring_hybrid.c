@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <mpi.h>
 #include <omp.h>
 
-// gcc bluring_omp.c -lm -fopenmp
-// ./a.out check_me.pgm 9 2 0
+// mpicc bluring_mpi.c -lm -fopenmp
+// mpirun -np 4 ./a.out check_me.pgm 9 2 0
 
 #if ((0x100 & 0xf) == 0x0)
 #define I_M_LITTLE_ENDIAN 1
@@ -25,17 +26,19 @@ void swap_image( void *image, int xsize, int ysize, int maxval );
 
 float* kernel(int k_type, float f, int N);
 
-void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w);
+void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int myid, int numprocs);
 
 void grid(int h, int w, int myid, int numprocs, int* lw, int* lh, int* a, int* b, int* c, int* d);
+
+void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, int numprocs);
 
 void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
 
 int main(int argc ,char **argv){
 
-	if( argc<5 ){
-		printf("ERROR: \nYou must provide 4 arguments in executions:\n   file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
+	if(argc<5){
+		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
 		exit(1);
 	}
 
@@ -68,18 +71,36 @@ int main(int argc ,char **argv){
 	}
 	float* K= kernel(k_type, f, N);
 	
-	void* blur=malloc(height*width*sizeof(u_int16_t));
+	void* blur;
 
-	bluring(K,blur,im,N,height,width);
+	//######################################################################
+	int myid , numprocs ;
+	MPI_Init(&argc,&argv);
+	MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 
+	if(myid==0){
+		blur=malloc(height*width*sizeof(u_int16_t));
+	}
 	
-	char final_name[42]="";
-	name_gen(filename, N, f, k_type, final_name);
+	void* lblur=malloc(height*width*sizeof(u_int16_t)/numprocs);
+	bluring(K,lblur,im,N,height,width,myid,numprocs);
 	
-	swap_image( blur, width, height, maxval );
-	write_pgm_image( blur, maxval, width, height, final_name);
+	send_to_master( blur, lblur, height, width, myid, numprocs);
+	free(lblur);
+
+	if(myid==0){
+		char final_name[42]="";
+		name_gen(filename, N, f, k_type, final_name);
+		
+		swap_image( blur, width, height, maxval );
+		write_pgm_image( blur, maxval, width, height, final_name);
+		free(blur);
+	}
+
+	MPI_Finalize();
+	//######################################################################
 	
-	free(blur);
 	free(im);
 	free(K);
 	return 0;
@@ -125,89 +146,86 @@ float * kernel(int k_type,float f, int N){
 }
 
 			
-void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w){
-	#pragma omp parallel
-	{
-		int n=N/2;
-		float norm, sum;
-		
-		int myid=omp_get_thread_num();
-		int numthreads=omp_get_num_threads();
-
-		int lw,lh,a,b,c,d;
-		grid(h,w,myid,numthreads,&lw,&lh,&a,&b,&c,&d);
-		
-		int e=-n,f=n,g=-n,l=n,bool;
-		for (int i=a; i<b; i++){
-			for (int j=c; j<d; j++){
-				bool=1;
-				if( i<N-(n+1) ){
-					e=-i;
-					f=n;
-					if( j<N-(n+1) ){
-						g=-j;
-						l=n;
-					}
-					else if( j>=w-(N-n) ){
-						g=-n;
-						l=w-j-1;
-					}
-					else{
-						g=-n;
-						l=n;
-					}
+void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int myid, int numprocs){
+	int n=N/2;
+	float norm, sum;
+	
+	int lw,lh,a,b,c,d;
+	
+	grid(h,w,myid,numprocs,&lw,&lh,&a,&b,&c,&d);
+	
+	int e=-n,f=n,g=-n,l=n, bool;
+	for (int i=a; i<b; i++){
+		for (int j=c; j<d; j++){
+			bool=1;
+			if( i<N-(n+1) ){
+				e=-i;
+				f=n;
+				if( j<N-(n+1) ){
+					g=-j;
+					l=n;
 				}
-				else if( i>=h-(N-n) ){
-					e=-n;
-					f=h-i-1;
-					if( j<N-(n+1) ){
-						g=-j;
-						l=n;
-					}
-					else if( j>=w-(N-n) ){
-						g=-n;
-						l=w-j-1;
-					}
-					else{
-						g=-n;
-						l=n;
-					}
+				else if( j>=w-(N-n) ){
+					g=-n;
+					l=w-j-1;
 				}
 				else{
-					e=-n;
-					f=n;
-					if( j<N-(n+1) ){
-						g=-j;
-						l=n;
-					}
-					else if( j>=w-(N-n) ){
-						g=-n;
-						l=w-j-1;
-					}
-					else{
-						bool=0;
-						g=-n;
-						l=n;
-					}	
+					g=-n;
+					l=n;
 				}
-				norm=1;
-				if(bool==1){ //normalization for borders
-					sum=0;
-					for (int u=e; u<=f; u++){
-						for (int v=g; v<=l; v++){
-							sum += K[(u+n)*N+(v+n)];
-						}
-					}
-					norm=1./sum;
+			}
+			else if( i>=h-(N-n) ){
+				e=-n;
+				f=h-i-1;
+				if( j<N-(n+1) ){
+					g=-j;
+					l=n;
 				}
+				else if( j>=w-(N-n) ){
+					g=-n;
+					l=w-j-1;
+				}
+				else{
+					g=-n;
+					l=n;
+				}
+			}
+			else{
+				e=-n;
+				f=n;
+				if( j<N-(n+1) ){
+					g=-j;
+					l=n;
+				}
+				else if( j>=w-(N-n) ){
+					g=-n;
+					l=w-j-1;
+				}
+				else{
+					bool=0;
+					g=-n;
+					l=n;
+				}	
+			}
+			norm=1;
+			if(bool==1){ //normalization for borders
 				sum=0;
 				for (int u=e; u<=f; u++){
 					for (int v=g; v<=l; v++){
-						sum += im[(i+u)*w+(j+v)]*K[(u+n)*N+(v+n)]*norm;
+						sum += K[(u+n)*N+(v+n)];
 					}
 				}
-				blur[i*w+j] = (u_int16_t)sum;
+				norm=1./sum;
 			}
+
+			sum=0;
+
+			for (int u=e; u<=f; u++){
+				for (int v=g; v<=l; v++){
+					sum += im[(i+u)*w+(j+v)]*K[(u+n)*N+(v+n)]*norm;
+				}
+			}
+			blur[(i-a)*lw+(j-c)] = (u_int16_t)sum;
 		}
 	}
 }
@@ -271,6 +289,36 @@ void grid(int h, int w, int myid, int numprocs, int* lw, int* lh, int* a, int* b
 }
 
 
+
+void send_to_master(u_int16_t* blur, u_int16_t* lblur, int h, int w, int myid, int numprocs){
+	MPI_Status status;
+	int tag=42;
+	int lw,lh,a,b,c,d;
+
+	if(myid==0){
+		int lw,lh,a,b,c,d;
+		grid(h,w,myid,numprocs,&lw,&lh,&a,&b,&c,&d);
+		for (int i=0; i<lh; i++){
+			for(int j=0; j<lw; j++){
+				blur[i*w+j]=lblur[i*lw+j];
+			}
+		}
+		for (int proc=1; proc<numprocs ; proc++) {
+			grid(h,w,proc,numprocs,&lw,&lh,&a,&b,&c,&d);
+			MPI_Recv(lblur,lw*lh,MPI_UNSIGNED_SHORT,proc,tag,MPI_COMM_WORLD,&status);
+			for (int i=a; i<b; i++){
+				for(int j=c; j<d; j++){
+					blur[i*w+j]=lblur[(i-a)*lw+(j-c)];
+				}
+			}
+		}
+	} else {
+		grid(h,w,myid,numprocs,&lw,&lh,&a,&b,&c,&d);
+		MPI_Send(lblur , lw*lh ,MPI_UNSIGNED_SHORT, 0 , tag ,MPI_COMM_WORLD) ;
+	}
+}
+
+
 void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 
 	char* temp;
@@ -278,7 +326,7 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 	*temp = '\0';
 
 	strcat(NAME, fname);
-	strcat(NAME,"-omp_");
+	strcat(NAME,"-mpi_");
 
 	char* type;
 	switch(k_type){
@@ -309,7 +357,6 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 	
 	strcat(NAME,".pgm");
 }
-
 
 
 
