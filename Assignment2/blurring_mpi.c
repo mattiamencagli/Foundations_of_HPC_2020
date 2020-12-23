@@ -36,8 +36,8 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
 int main(int argc ,char **argv){
 
-	if(argc<5){
-		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
+	if(argc<4){
+		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (only if you choose the weight kernel).\n");
 		exit(1);
 	}
 
@@ -54,7 +54,7 @@ int main(int argc ,char **argv){
 	
 	int N=strtol(argv[2], NULL, 10);
 	int k_type=strtol(argv[3],NULL,10);
-	float f=strtof(argv[4],NULL);
+	float f=0;
 	if(N<=0 || N%2==0){
 		printf("ERROR: \nThe dimension of the kernel should be a positive and odd integer.\n");
 		exit(1);
@@ -64,9 +64,16 @@ int main(int argc ,char **argv){
 		printf("0 for mean kernel \n1 for weight kernel \n2 for gauss kernel.\n");
 		exit(1);
 	}
-	if(f<0 || f>1){
-		printf("ERROR: \nf must be in the interval [0,1]. \n");
-		exit(1);
+	if(k_type==1){
+		if (argc<5){
+			printf("ERROR:\n You have choosen the weight kernel, you must provide f.\n");
+			exit(1);
+		}
+		f=strtof(argv[4],NULL);
+		if(f<0 || f>1){
+			printf("ERROR: \nf must be in the interval [0,1]. \n");
+			exit(1);
+		}
 	}
 	float* K= kernel(k_type, f, N);
 	
