@@ -34,13 +34,13 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
 int main(int argc ,char **argv){
 
-	if( argc<5 ){
-		printf("ERROR: \nYou must provide 4 arguments in executions:\n   file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), and the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
+	if( argc<6 ){
+		printf("ERROR: \nYou must provide 5 arguments in executions:\n the number of threads you want to use, file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (if you don't use the weight kernel provide a random value in the range [0,1]).\n");
 		exit(1);
 	}
 
 
-	char* filename = argv[1];
+	char* filename = argv[2];
 	int width=0,height=0,maxval=0;
 	void* im;
 	read_pgm_image( &im, &maxval, &width, &height, filename);
@@ -49,10 +49,14 @@ int main(int argc ,char **argv){
 	//swap_image( im, width, height, maxval );
 	//write_pgm_image( im, maxval, width, height, "prova.pgm");
 
-	
-	int N=strtol(argv[2], NULL, 10);
-	int k_type=strtol(argv[3],NULL,10);
-	float f=strtof(argv[4],NULL);
+	int th_num=strtol(argv[1],NULL, 10);
+	int N=strtol(argv[3], NULL, 10);
+	int k_type=strtol(argv[4],NULL,10);
+	float f=strtof(argv[5],NULL);
+	if(th_num<=0){
+		printf("ERROR: \nThe number of threads must be a positive integer.\n");
+		exit(1);
+	}
 	if(N<=0 || N%2==0){
 		printf("ERROR: \nThe dimension of the kernel should be a positive and odd integer.\n");
 		exit(1);
@@ -69,7 +73,8 @@ int main(int argc ,char **argv){
 	float* K= kernel(k_type, f, N);
 	
 	void* blur=malloc(height*width*sizeof(u_int16_t));
-
+	
+	omp_set_num_threads(th_num);
 	bluring(K,blur,im,N,height,width);
 
 	
