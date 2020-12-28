@@ -3,6 +3,6 @@
 
 gcc blurring_ser.c -lm -o blur_ser.x
 
-gcc blurring_omp.c -lm -fopenmp -o blur_omp.x
+gcc blurring_omp.c -lm -fopenmp -o blur_opm.x
 
 mpicc blurring_mpi.c -lm -o blur_mpi.x
