@@ -38,6 +38,7 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 int main(int argc ,char **argv){
 
 	clock_t start=clock();
+	printf("#####################################\n");
 
 	if(argc<4){
 		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (only if you choose the weight kernel).\n");
