@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <mpi.h>
+#include <time.h>
 
 // mpicc bluring_mpi.c -lm
 // mpirun -np 4 ./a.out check_me.pgm 9 2 0
@@ -35,6 +36,8 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
 
 int main(int argc ,char **argv){
+
+	clock_t start=clock();
 
 	if(argc<4){
 		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (only if you choose the weight kernel).\n");
@@ -109,6 +112,10 @@ int main(int argc ,char **argv){
 	
 	free(im);
 	free(K);
+
+	clock_t end=clock();
+	double tot_time= (double)(end - start)/CLOCKS_PER_SEC;
+	printf("%10.8f\n",tot_time);
 	return 0;
 }
 
