@@ -37,11 +37,20 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 
 int main(int argc ,char **argv){
 
+	int myid , numprocs ;
+	MPI_Init(&argc,&argv);
+	MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+
 	clock_t start=clock();
-	printf("#####################################\n");
+	if(myid==0){
+		printf("##### %d processors\n",numprocs);
+	}
 
 	if(argc<4){
-		printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (only if you choose the weight kernel).\n");
+		if(myid==0){
+			printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (only if you choose the weight kernel).\n");
+		}
 		exit(1);
 	}
 
@@ -60,42 +69,42 @@ int main(int argc ,char **argv){
 	int k_type=strtol(argv[3],NULL,10);
 	float f=0;
 	if(N<=0 || N%2==0){
-		printf("ERROR: \nThe dimension of the kernel should be a positive and odd integer.\n");
+		if(myid==0){
+			printf("ERROR: \nThe dimension of the kernel should be a positive and odd integer.\n");
+		}
 		exit(1);
 	}
 	if( k_type!=0 && k_type!=1 && k_type!=2 ){
-		printf("ERROR: \nThe kernel case number must be: \n");
-		printf("0 for mean kernel \n1 for weight kernel \n2 for gauss kernel.\n");
+		if(myid==0){
+			printf("ERROR: \nThe kernel case number must be: \n");
+			printf("0 for mean kernel \n1 for weight kernel \n2 for gauss kernel.\n");
+		}
 		exit(1);
 	}
 	if(k_type==1){
 		if (argc<5){
-			printf("ERROR:\n You have choosen the weight kernel, you must provide f.\n");
+			if(myid==0){
+				printf("ERROR:\n You have choosen the weight kernel, you must provide f.\n");
+			}
 			exit(1);
 		}
 		f=strtof(argv[4],NULL);
 		if(f<0 || f>1){
-			printf("ERROR: \nf must be in the interval [0,1]. \n");
+			if(myid==0){
+				printf("ERROR: \nf must be in the interval [0,1]. \n");
+			}
 			exit(1);
 		}
 	}
 	float* K= kernel(k_type, f, N);
-	
-	void* blur;
-
-	//######################################################################
-	int myid , numprocs ;
-	MPI_Init(&argc,&argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
-	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-
-	if(myid==0){
-		blur=malloc(height*width*sizeof(u_int16_t));
-	}
-	
+		
 	void* lblur=malloc(height*width*sizeof(u_int16_t)/numprocs);
 	bluring(K,lblur,im,N,height,width,myid,numprocs);
 	
+	void* blur;
+	if(myid==0){
+		blur=malloc(height*width*sizeof(u_int16_t));
+	}
 	send_to_master( blur, lblur, height, width, myid, numprocs);
 	free(lblur);
 
@@ -110,14 +119,12 @@ int main(int argc ,char **argv){
 
 	clock_t end=clock();
 	double tot_time= (double)(end - start)/CLOCKS_PER_SEC;
-	printf("%d :%10.8f\n",myid,tot_time);
-	
-	MPI_Finalize();
-	//######################################################################
+	printf("%d :%12.8f\n",myid,tot_time);
 	
 	free(im);
 	free(K);
 
+	MPI_Finalize();
 	return 0;
 }
 

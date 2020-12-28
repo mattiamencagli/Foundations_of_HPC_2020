@@ -36,7 +36,7 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME);
 int main(int argc ,char **argv){
 
 	clock_t start=clock();
-	printf("#####################################\n");
+	printf("##### %d threads\n",argv[1]);
 
 	if( argc<5 ){
 		printf("ERROR: \nYou must provide 5 arguments in executions:\n the number of threads you want to use, file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (only if you choose the weight kernel).\n");
@@ -101,7 +101,7 @@ int main(int argc ,char **argv){
 	
 	clock_t end=clock();
 	double tot_time= (double)(end - start)/(CLOCKS_PER_SEC*th_num);
-	printf("%10.8f\n",tot_time);
+	printf("%12.8f\n",tot_time);
 	return 0;
 }
 
