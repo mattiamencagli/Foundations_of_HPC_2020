@@ -107,15 +107,16 @@ int main(int argc ,char **argv){
 		free(blur);
 	}
 
+	clock_t end=clock();
+	double tot_time= (double)(end - start)/CLOCKS_PER_SEC;
+	printf("%d :%10.8f\n",myid,tot_time);
+	
 	MPI_Finalize();
 	//######################################################################
 	
 	free(im);
 	free(K);
 
-	clock_t end=clock();
-	double tot_time= (double)(end - start)/CLOCKS_PER_SEC;
-	printf("%10.8f\n",tot_time);
 	return 0;
 }
 
