@@ -53,7 +53,7 @@ int main(int argc ,char **argv){
 	//write_pgm_image( im, maxval, width, height, "prova.pgm");
 
 	int th_num=strtol(argv[1],NULL, 10);
-	printf("##### %d threads\n",thnum);
+	printf("##### %d threads\n",th_num);
 	int N=strtol(argv[3], NULL, 10);
 	int k_type=strtol(argv[4],NULL,10);
 	float f=0;
