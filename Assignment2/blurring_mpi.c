@@ -118,8 +118,9 @@ int main(int argc ,char **argv){
 	}
 
 	clock_t end=clock();
+	//end = MPI_Wtime();
 	double tot_time= (double)(end - start)/CLOCKS_PER_SEC;
-	printf("%d :%12.8f\n",myid,tot_time);
+	printf("%3d: %12.8f\n",myid,tot_time);
 	
 	free(im);
 	free(K);
