@@ -8,6 +8,7 @@ cd $PBS_O_WORKDIR
 rm strong_scal.*
 rm time_strong_mpi
 rm time_strong_opm
+rm ubt_strong_opm
  
 module load  openmpi/4.0.3/gnu/9.3.0
 

@@ -42,7 +42,8 @@ int main(int argc ,char **argv){
 	MPI_Comm_size(MPI_COMM_WORLD,&numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 
-	clock_t start=clock();
+	//clock_t start=clock();
+	start = MPI_Wtime();
 	if(myid==0){
 		printf("##### %d processors\n",numprocs);
 	}
@@ -116,11 +117,11 @@ int main(int argc ,char **argv){
 		write_pgm_image( blur, maxval, width, height, final_name);
 		free(blur);
 	}
-
-	clock_t end=clock();
-	//end = MPI_Wtime();
-	double tot_time= (double)(end - start)/CLOCKS_PER_SEC;
-	printf("%3d: %12.8f\n",myid,tot_time);
+	
+	end = MPI_Wtime();
+	//clock_t end=clock();
+	//double tot_time= (double)(end - start)/CLOCKS_PER_SEC;
+	printf("%3d: %12.8f\n",myid,end-start);
 	
 	free(im);
 	free(K);
