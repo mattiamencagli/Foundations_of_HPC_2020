@@ -14,11 +14,9 @@ module load  openmpi/4.0.3/gnu/9.3.0
 
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
 mpirun --mca btl '^openib' -np ${procs} blur_mpi.x check_me.pgm 9 0 >>time_strong_mpi
-sleep 0.5
 done
 
 
 for threads in 1 4 8 12 16 20 24 28 32 36 40 44 48 96 144 192; do
-./blur_opm.x ${threads} check_me.pgm 9 0 >>time_strong_opm
-sleep 0.5
+/usr/bin/time ./blur_opm.x ${threads} check_me.pgm 9 0 >>time_strong_opm 2>> ubt_strong_opm
 done
