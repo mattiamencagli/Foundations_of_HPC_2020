@@ -1,23 +1,22 @@
 #!/bin/bash
 #PBS -q dssc
 #PBS -l nodes=1:ppn=48
-#PBS -l walltime=00:20:00
+#PBS -l walltime=00:30:00
 
 cd $PBS_O_WORKDIR
 
 rm strong_scal.*
 rm time_strong_mpi
 rm time_strong_opm
-rm ubt_strong_opm
  
 module load  openmpi/4.0.3/gnu/9.3.0
 
 
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
-mpirun --mca btl '^openib' -np ${procs} blur_mpi.x check_me.pgm 99 0 >>time_strong_mpi
+mpirun --mca btl '^openib' -np ${procs} blur_mpi.x check_me.pgm 23 0 >>time_strong_mpi23
 done
 
 
 for threads in 1 4 8 12 16 20 24 28 32 36 40 44 48 96 144 192; do
-/usr/bin/time ./blur_opm.x ${threads} check_me.pgm 99 0 >>time_strong_opm 2>> ubt_strong_opm
+./blur_opm.x ${threads} check_me.pgm 23 0 >>time_strong_opm23
 done
