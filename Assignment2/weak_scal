@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -q dssc
+#PBS -l nodes=1:ppn=36
+#PBS -l walltime=00:30:00
+
+cd $PBS_O_WORKDIR
+
+rm strong_scal.*
+ 
+module load  openmpi/4.0.3/gnu/9.3.0
+
+base=512
+
+for procs in 1 2 3 4 5 6 ; do
+num=((${procs}*${base}))
+image="image_${num}.pgm"
+tot_proc=((${procs}*${procs}))
+mpirun --mca btl '^openib' -np ${tot_proc} blur_mpi.x ${image} 99 0 >>time_weak_mpi
+done
+
+for threads in 1 2 3 4 5 6 ; do
+num=((${threadss}*${base}))
+image="image_${num}.pgm"
+tot_th=((${threads}*${threads}))
+./blur_opm.x ${tot_th} ${image} 99 0 >>time_weak_opm
+done
+
