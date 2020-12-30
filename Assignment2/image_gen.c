@@ -259,7 +259,7 @@ int main( int argc, char **argv )
 
     void *ptr = generate_gradient( maxval, xsize, xsize );
 
-	char name[20];
+	char name[20]="";
 	name_gen(argv[1], name);
 	
     write_pgm_image( ptr, maxval, xsize, xsize, name );
