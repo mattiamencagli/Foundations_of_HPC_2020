@@ -12,16 +12,16 @@ module load  openmpi/4.0.3/gnu/9.3.0
 base=512
 
 for procs in 1 2 3 4 5 6 ; do
-num=((${procs}*${base}))
+num=$((${procs}*${base}))
 image="image_${num}.pgm"
-tot_proc=((${procs}*${procs}))
+tot_proc=$((${procs}*${procs}))
 mpirun --mca btl '^openib' -np ${tot_proc} blur_mpi.x ${image} 99 0 >>time_weak_mpi99
 done
 
 for threads in 1 2 3 4 5 6 9 12; do
-num=((${threadss}*${base}))
+num=$((${threadss}*${base}))
 image="image_${num}.pgm"
-tot_th=((${threads}*${threads}))
+tot_th=$((${threads}*${threads}))
 ./blur_opm.x ${tot_th} ${image} 99 0 >>time_weak_opm99
 done
 
