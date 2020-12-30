@@ -19,7 +19,7 @@ mpirun --mca btl '^openib' -np ${tot_proc} blur_mpi.x ${image} 99 0 >>time_weak_
 done
 
 for threads in 1 2 3 4 5 6 9 12; do
-num=$((${threadss}*${base}))
+num=$((${threads}*${base}))
 image="image_${num}.pgm"
 tot_th=$((${threads}*${threads}))
 ./blur_opm.x ${tot_th} ${image} 99 0 >>time_weak_opm99
