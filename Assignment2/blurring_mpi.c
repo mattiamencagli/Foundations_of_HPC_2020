@@ -350,33 +350,34 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 	*temp = '\0';
 
 	strcat(NAME, fname);
-	strcat(NAME,"-mpi_");
+	strcat(NAME,".b_");
 
-	char* type;
-	switch(k_type){
-		case(0):
-			type="mean";
-			break;
-		case(1):
-			type="weight";
-			break;
-		case(2):
-			type="gauss";
-			break;
-	}
-	
-	strcat(NAME,type);
-	strcat(NAME, "_N");
+	char KN[4];
+	sprintf( KN, "%d", k_type );
+	strcat(NAME,KN);
+	strcat(NAME,"_");
 
-	char SN[3];
+	char SN[4];
 	sprintf( SN, "%d", N );
+	strcat(NAME,SN);
+	strcat(NAME,"x");
 	strcat(NAME,SN);
 
 	if(k_type==1){
-		strcat(NAME, "_f");
-		char sf[3];
-		gcvt(f,3,sf);
-		strcat(NAME,sf);
+		if(f==1 || f==0){
+			strcat(NAME, "_");
+			char sf[1];
+			gcvt(f,1,sf);
+			strcat(NAME,sf);
+		}
+		else{
+			strcat(NAME, "_");
+			char sf[2];
+			int F=(f*10);
+			sprintf( sf, "%d", F );
+			strcat(NAME,"0");
+			strcat(NAME,sf);
+		}
 	}
 	
 	strcat(NAME,".pgm");
