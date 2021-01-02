@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -q dssc
-#PBS -l nodes=ct1pf-fnode001:ppn=24+:ct1pf-fnode002:ppn=24+:ct1pf-fnode003:ppn=24+:ct1pf-fnode004:ppn=24
+#PBS -l nodes=gpu1:ppn=48+:gpu1:ppn48+:gpu1:ppn48+:gpu1:ppn48
 #PBS -l walltime=12:00:00
 
 cd $PBS_O_WORKDIR
@@ -10,11 +10,11 @@ rm s_scal_new.*
 module load  openmpi/4.0.3/gnu/9.3.0
 
 
-for procs in 1 12 24 48 72 96; do
+for procs in 1 12 24 48 96 144 192; do
 mpirun --mca btl '^openib' -np ${procs} blur_mpi.x earth-large.pgm 11 1 0.2 >>time_strong_new_mpi11
 done
 
 
-for threads in 1 12 24 48 72 96; do
+for threads in 1 12 24 48 72 96 144 192; do
 ./blur_opm.x ${threads} earth-large.pgm 11 1 0.2 >>time_strong_new_opm11
 done
