@@ -6,5 +6,6 @@ gcc blurring_ser.c -lm -o blur_ser.x
 gcc blurring_omp.c -lm -fopenmp -o blur_opm.x
 
 mpicc blurring_mpi.c -lm -o blur_mpi.x
+mpicc blurring_mpi_new.c -lm -o blur_mpi_new.x
 
 gcc image_gen.c -o gen.x
