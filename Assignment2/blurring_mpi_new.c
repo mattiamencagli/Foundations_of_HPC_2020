@@ -26,7 +26,7 @@ void swap_image( void *image, int xsize, int ysize, int maxval );
 
 float* kernel(int k_type, float f, int N);
 
-void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w);
+void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int a, int b, int c, int d);
 
 void grid(int h, int w, int N, int myid, int numprocs, int* lw, int* lh, int* a, int* b, int* c, int* d);
 
@@ -55,8 +55,9 @@ int main(int argc ,char **argv){
 			printf("ERROR: \nYou must provide 4 arguments in executions:\n file_name.pgm,  kernel dimension, kernel case number (0 for mean, 1 for weight, 2 or gaussian), the parameter f (only if you choose the weight kernel).\n");
 		}
 		exit(1);
-	}	
+	}
 	
+	char* filename = argv[1];
 	int N=strtol(argv[2], NULL, 10);
 	int k_type=strtol(argv[3],NULL,10);
 	float f=0;
@@ -93,7 +94,6 @@ int main(int argc ,char **argv){
 	void* im;
 	int width=0,height=0,maxval=0;
 	if(myid==0){
-		char* filename = argv[1];
 		read_pgm_image( &im, &maxval, &width, &height, filename);
 		swap_image( im, width, height, maxval );
 	}
@@ -101,6 +101,7 @@ int main(int argc ,char **argv){
 	int loc_h, loc_w, a, b, c, d;
 	send_to_slaves(im, lim, N, height, width, myid, numprocs, &loc_h, &loc_w, &a, &b, &c, &d);
 	free(im);
+	printf("OOOOOOOOKKKKKKKKK\n\n");
 	
 	void* lblur=malloc((loc_h-N)*(loc_w-N)*sizeof(u_int16_t));
 	bluring(K,lblur,lim,N,loc_h,loc_w,a,b,c,d);
@@ -173,20 +174,20 @@ float * kernel(int k_type,float f, int N){
 }
 
 			
-void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int* a, int* b, int* c, int* d){
+void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w, int a, int b, int c, int d){
 	int n=N/2;
 	float norm, sum;
 	int N1=0, N2=0, N3=0, N4=0;
-	if(a=!0){
+	if(a!=0){
 		N1=n;
 	}
-	if(b=!h){
+	if(b!=h){
 		N2=n;
 	}
-	if(c=!0){
+	if(c!=0){
 		N3=n;
 	}
-	if(d=!w){
+	if(d!=w){
 		N4=n;
 	}
 	int fw=w-N3-N4;
@@ -317,23 +318,23 @@ void grid(int h, int w, int N, int myid, int numprocs, int* lw, int* lh, int* a,
 	int N1=0, N2=0, N3=0, N4=0;
 	int n=N/2;
 	*a=(myid-myid%proc_w)*(*lh)/proc_w;
-	if (*a=!0){
+	*b=(*a)+(*lh)+x_h;
+	*c=(myid%proc_w)*(*lw);
+	*d=(*c)+(*lw)+x_w;
+	if ((*a)!=0){
 		*a -= n;
 		N1=n;
 	}
-	*b=(*a)+(*lh)+x_h;
-	if (*b=!h){
+	if (*b!=h){
 		*b += n;
 		N2=n;
 	}
-	*c=(myid%proc_w)*(*lw);
-	if (*c=!0){
+	if (*c!=0){
 		*c -= n;
 		N3=n;
 	}
-	*d=(*c)+(*lw)+x_w;
-	if (*d=!w){
-		*c += n;
+	if (*d!=w){
+		*d += n;
 		N4=n;
 	}
 	*lw+=x_w+N3+N4;
@@ -362,18 +363,18 @@ void send_to_master(u_int16_t* blur, u_int16_t* lblur,int N, int h, int w, int l
 			N2=0;
 			N3=0;
 			N4=0;
-			grid(h,w,proc,numprocs,&lw,&lh,&a,&b,&c,&d);
+			grid(h,w,N,proc,numprocs,&lw,&lh,&a,&b,&c,&d);
 			MPI_Recv(lblur,lw*lh,MPI_UNSIGNED_SHORT,proc,tag,MPI_COMM_WORLD,&status);
-			if(a=!0){
+			if(a!=0){
 				N1=n;
 			}
-			if(b=!h){
+			if(b!=h){
 				N1=n;
 			}
-			if(c=!0){
+			if(c!=0){
 				N1=n;
 			}
-			if(d=!w){
+			if(d!=w){
 				N1=n;
 			}
 			for (int i=a+N1; i<b-N2; i++){
@@ -394,18 +395,22 @@ void send_to_slaves(u_int16_t* im, u_int16_t* lim, int N, int h, int w, int myid
 	if(myid==0){
 		for (int proc=1; proc<numprocs ; proc++) {
 			grid(h,w,N,proc,numprocs,lw,lh,a,b,c,d);
+			printf("%d, %d, %d, %d,   %d, %d\n",*a,*b,*c,*d, *lh, *lw);
 			lim=malloc((*lw)*(*lh)*sizeof(u_int16_t));
 			for (int i=*a; i<*b; i++){
 				for(int j=*c; j<*d; j++){
 					lim[(i-(*a))*(*lw)+(j-(*c))]=im[i*w+j];
+					//printf("lim: %d,   im: %d\n",(i-(*a))*(*lw)+(j-(*c)),i*w+j);
+					printf("i=%d, j=%d\n",i,j);
 				}
 			}
-			MPI_Send(*lw, 1, MPI_INTEGER, proc, tag1, MPI_COMM_WORLD);
-			MPI_Send(*lh, 1, MPI_INTEGER, proc, tag2, MPI_COMM_WORLD);
-			MPI_Send(*a , 1, MPI_INTEGER, proc, tag3, MPI_COMM_WORLD);
-			MPI_Send(*b , 1, MPI_INTEGER, proc, tag4, MPI_COMM_WORLD);
-			MPI_Send(*c , 1, MPI_INTEGER, proc, tag5, MPI_COMM_WORLD);
-			MPI_Send(*d , 1, MPI_INTEGER, proc, tag6, MPI_COMM_WORLD);
+			printf("ciao");
+			MPI_Send(lw, 1, MPI_INTEGER, proc, tag1, MPI_COMM_WORLD);
+			MPI_Send(lh, 1, MPI_INTEGER, proc, tag2, MPI_COMM_WORLD);
+			MPI_Send(a , 1, MPI_INTEGER, proc, tag3, MPI_COMM_WORLD);
+			MPI_Send(b , 1, MPI_INTEGER, proc, tag4, MPI_COMM_WORLD);
+			MPI_Send(c , 1, MPI_INTEGER, proc, tag5, MPI_COMM_WORLD);
+			MPI_Send(d , 1, MPI_INTEGER, proc, tag6, MPI_COMM_WORLD);
 			MPI_Send(lim , (*lw)*(*lh) ,MPI_UNSIGNED_SHORT, proc, tag ,MPI_COMM_WORLD) ;
 		}
 		grid(h,w,N,myid,numprocs,lw,lh,a,b,c,d);
@@ -416,12 +421,12 @@ void send_to_slaves(u_int16_t* im, u_int16_t* lim, int N, int h, int w, int myid
 			}
 		}
 	} else {
-		MPI_Recv(*lw, 1, MPI_INTEGER, 0, tag1, MPI_COMM_WORLD, &status);
-		MPI_Recv(*lh, 1, MPI_INTEGER, 0, tag2, MPI_COMM_WORLD, &status);
-		MPI_Recv(*a , 1, MPI_INTEGER, 0, tag3, MPI_COMM_WORLD, &status);
-		MPI_Recv(*b , 1, MPI_INTEGER, 0, tag4, MPI_COMM_WORLD, &status);
-		MPI_Recv(*c , 1, MPI_INTEGER, 0, tag5, MPI_COMM_WORLD, &status);
-		MPI_Recv(*d , 1, MPI_INTEGER, 0, tag6, MPI_COMM_WORLD, &status);
+		MPI_Recv(lw, 1, MPI_INTEGER, 0, tag1, MPI_COMM_WORLD, &status);
+		MPI_Recv(lh, 1, MPI_INTEGER, 0, tag2, MPI_COMM_WORLD, &status);
+		MPI_Recv(a , 1, MPI_INTEGER, 0, tag3, MPI_COMM_WORLD, &status);
+		MPI_Recv(b , 1, MPI_INTEGER, 0, tag4, MPI_COMM_WORLD, &status);
+		MPI_Recv(c , 1, MPI_INTEGER, 0, tag5, MPI_COMM_WORLD, &status);
+		MPI_Recv(d , 1, MPI_INTEGER, 0, tag6, MPI_COMM_WORLD, &status);
 		MPI_Recv(lim,(*lw)*(*lh),MPI_UNSIGNED_SHORT,0,tag,MPI_COMM_WORLD,&status);
 	}
 }

@@ -11,10 +11,10 @@ module load  openmpi/4.0.3/gnu/9.3.0
 
 
 for procs in 1 4 8 12 16 20 24 28 32 36 40 44 48 ; do
-mpirun --mca btl '^openib' -np ${procs} blur_mpi.x check_me.pgm 23 0 >>time_strong_mpi23
+mpirun --mca btl '^openib' -np ${procs} blur_mpi.x earth-large.pgm 11 1 0.2 >>time_strong_earth_mpi11
 done
 
 
 for threads in 1 4 8 12 16 20 24 28 32 36 40 44 48 96 144 192; do
-./blur_opm.x ${threads} check_me.pgm 23 0 >>time_strong_opm23
+./blur_opm.x ${threads} earth-large.pgm 11 1 0.2 >>time_strong_erath_opm11
 done
