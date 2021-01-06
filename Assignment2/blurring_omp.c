@@ -113,27 +113,32 @@ float * kernel(int k_type,float f, int N){
 	float* k=(float *)malloc(N*N*sizeof(float));
 	int n=N/2;
 	float sum;
+	float arg, n22, pin22;
 	
 	switch(k_type){
 		
 		case(0): // MEAN (normalizzato)
+			arg=1./((float)N*(float)N);
 			for (int i=0; i<N*N; i++){
-				k[i]=1./((float)N*(float)N);
+				k[i]=arg;
 			}
 			return k;
 			
 		case(1): // WEIGHT (normalizzato)
+			arg=(1.-f)/(((float)N*(float)N)-1.);
 			for (int i=0; i<N*N; i++){
-				k[i]=(1.-f)/((float)N*(float)N-1.);
+				k[i]=arg;
 			}
 			k[(N/2)*(N+1)]=f;
 			return k;
 			
 		case(2): // GAUSSIAN (normalizzato)
 			sum=0;
+			n22=2.*(float)n*(float)n;
+			pin22=3.1415*n22;
 			for (int i=0; i<N; i++){
 				for (int j=0; j<N; j++){
-					k[i*N+j]=pow(2.7182,(-(pow(i-n,2)+pow(j-n,2))/(2.*(float)n*(float)n)))/(2.*3.1415*(float)n*(float)n);
+					k[i*N+j]=pow(2.7182,(-(pow(i-n,2)+pow(j-n,2))/n22))/pin22;
 					sum +=k[i*N+j];
 				}
 			}
@@ -155,6 +160,8 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 		int myid=omp_get_thread_num();
 		int numthreads=omp_get_num_threads();
 
+		int ij_inf=N-(n+1), i_sup=h-(N-n), j_sup=w-(N-n);
+
 		int lw,lh,a,b,c,d;
 		grid(h,w,myid,numthreads,&lw,&lh,&a,&b,&c,&d);
 		
@@ -162,14 +169,14 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 		for (int i=a; i<b; i++){
 			for (int j=c; j<d; j++){
 				bool=1;
-				if( i<N-(n+1) ){
+				if( i<ij_inf ){
 					e=-i;
 					f=n;
-					if( j<N-(n+1) ){
+					if( j<ij_inf ){
 						g=-j;
 						l=n;
 					}
-					else if( j>=w-(N-n) ){
+					else if( j>=j_sup ){
 						g=-n;
 						l=w-j-1;
 					}
@@ -178,14 +185,14 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 						l=n;
 					}
 				}
-				else if( i>=h-(N-n) ){
+				else if( i>=i_sup ){
 					e=-n;
 					f=h-i-1;
-					if( j<N-(n+1) ){
+					if( j<ij_inf ){
 						g=-j;
 						l=n;
 					}
-					else if( j>=w-(N-n) ){
+					else if( j>=j_sup ){
 						g=-n;
 						l=w-j-1;
 					}
@@ -197,11 +204,11 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 				else{
 					e=-n;
 					f=n;
-					if( j<N-(n+1) ){
+					if( j<ij_inf ){
 						g=-j;
 						l=n;
 					}
-					else if( j>=w-(N-n) ){
+					else if( j>=j_sup ){
 						g=-n;
 						l=w-j-1;
 					}
@@ -224,10 +231,10 @@ void bluring(float* K,u_int16_t* blur, u_int16_t* im, int N, int h, int w){
 				sum=0;
 				for (int u=e; u<=f; u++){
 					for (int v=g; v<=l; v++){
-						sum += im[(i+u)*w+(j+v)]*K[(u+n)*N+(v+n)]*norm;
+						sum += im[(i+u)*w+(j+v)]*K[(u+n)*N+(v+n)];
 					}
 				}
-				blur[i*w+j] = (u_int16_t)sum;
+				blur[i*w+j] = (u_int16_t)(sum*norm);
 			}
 		}
 	}
