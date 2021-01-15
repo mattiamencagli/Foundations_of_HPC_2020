@@ -336,7 +336,7 @@ void name_gen(char* fname, int N, float f, int k_type, char* NAME){
 		}
 	}
 	
-	strcat(NAME,".pgm");
+	strcat(NAME,".omp.pgm");
 }
 
 
